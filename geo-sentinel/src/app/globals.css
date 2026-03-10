@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-retro: var(--font-vt323);
+
+  --color-tactical-950: #050505;
+  --color-tactical-900: #0a0a0a;
+  --color-tactical-800: #121212;
+  --color-tactical-700: #1a1a1a;
+  --color-tactical-600: #262626;
+  --color-tactical-500: #404040;
+  --color-tactical-200: #e5e5e5;
+
+  --color-neon-blue: #00f3ff;
+  --color-neon-blue-dim: rgba(0, 243, 255, 0.2);
+  --color-neon-red: #ff003c;
+  --color-neon-red-dim: rgba(255, 0, 60, 0.2);
+  --color-neon-amber: #ffb700;
+  --color-neon-amber-dim: rgba(255, 183, 0, 0.2);
+  --color-neon-green: #00ff66;
+
+  --animate-pulse-fast: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-scanline: scanline 6s linear infinite;
+
+  --keyframes-scanline: {
+    0%: {
+      transform: translateY(-100%);
+    }
+
+    100%: {
+      transform: translateY(100vh);
+    }
+  }
+}
+
+@layer base {
+  body {
+    background-color: var(--color-tactical-950);
+    color: var(--color-tactical-200);
+    /* Grid background for command center feel */
+    background-image:
+      linear-gradient(rgba(0, 243, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 243, 255, 0.02) 1px, transparent 1px);
+    background-size: 30px 30px;
+    background-attachment: fixed;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  .glow-blue {
+    box-shadow: 0 0 10px var(--color-neon-blue-dim), 0 0 2px var(--color-neon-blue);
+  }
+
+  .glow-red {
+    box-shadow: 0 0 12px var(--color-neon-red-dim), 0 0 3px var(--color-neon-red);
+  }
+
+  .glow-amber {
+    box-shadow: 0 0 10px var(--color-neon-amber-dim), 0 0 2px var(--color-neon-amber);
+  }
+
+  .text-glow-blue {
+    text-shadow: 0 0 8px var(--color-neon-blue-dim), 0 0 2px var(--color-neon-blue);
+  }
+
+  .text-glow-red {
+    text-shadow: 0 0 8px var(--color-neon-red-dim), 0 0 2px var(--color-neon-red);
+  }
+
+  .text-glow-amber {
+    text-shadow: 0 0 8px var(--color-neon-amber-dim), 0 0 2px var(--color-neon-amber);
+  }
+
+  .scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 100;
+    background: linear-gradient(0deg,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 243, 255, 0.05) 50%,
+        rgba(0, 0, 0, 0) 100%);
+    opacity: 0.1;
+    position: fixed;
+    bottom: 100%;
+    left: 0;
+    pointer-events: none;
+    animation: scanline 8s linear infinite;
+  }
+}
