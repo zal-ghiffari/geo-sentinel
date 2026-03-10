@@ -97,7 +97,7 @@ export function TacticalMap({ events = [], height = "500px" }: TacticalMapProps)
 
     useEffect(() => {
         const topics = new Set<string>();
-        events.forEach(e => {
+        events.forEach((e: any) => {
             if (e.Topics) e.Topics.split(',').forEach((t: string) => topics.add(t.trim()));
         });
         const topicList = Array.from(topics).filter(Boolean);
@@ -112,7 +112,7 @@ export function TacticalMap({ events = [], height = "500px" }: TacticalMapProps)
     };
 
     const getPinColor = (assetStr: string) => {
-        const assets = assetStr.split(',').map(a => a.trim());
+        const assets = assetStr.split(',').map((a: string) => a.trim());
         for (const a of assets) {
             if (ASSET_COLORS[a]) return ASSET_COLORS[a];
         }
@@ -134,7 +134,7 @@ export function TacticalMap({ events = [], height = "500px" }: TacticalMapProps)
         );
     }
 
-    const filteredEvents = events.filter(evt => {
+    const filteredEvents = events.filter((evt: any) => {
         const evtTopics = (evt.Topics || "").split(',').map((t: string) => t.trim());
         return evtTopics.some((t: string) => selectedTopics.includes(t)) || (evtTopics.length === 1 && evtTopics[0] === "" && selectedTopics.length === availableTopics.length);
     });
@@ -212,9 +212,9 @@ export function TacticalMap({ events = [], height = "500px" }: TacticalMapProps)
                         return null;
                     })}
 
-                    {filteredEvents.map((evt, idx) => {
+                    {filteredEvents.map((evt: any, idx: number) => {
                         const codes = (evt.Geocode || "").split(',').map((c: string) => c.trim());
-                        return codes.map(code => {
+                        return codes.map((code: string) => {
                             let pos = COORDINATE_MAP[code];
                             if (!pos) return null;
 
@@ -225,7 +225,7 @@ export function TacticalMap({ events = [], height = "500px" }: TacticalMapProps)
                             const color = getPinColor(evt.Assets || evt.Topics);
 
                             // Scale pin size based on data density (mocking logic since we don't have counts per location easily available in this loop)
-                            const density = events.filter(e => e.Geocode?.includes(code)).length;
+                            const density = events.filter((e: any) => e.Geocode?.includes(code)).length;
                             const radius = 4 + Math.min(density * 1.5, 12);
 
                             return (
@@ -278,7 +278,7 @@ export function TacticalMap({ events = [], height = "500px" }: TacticalMapProps)
                         <span className="opacity-50 tracking-tighter">[{selectedTopics.length}/{availableTopics.length}]</span>
                     </div>
                     <div className="space-y-1.5">
-                        {availableTopics.map(topic => (
+                        {availableTopics.map((topic: string) => (
                             <label key={topic} className="flex items-center gap-2 cursor-pointer group">
                                 <input
                                     type="checkbox"
