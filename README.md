@@ -37,4 +37,3 @@ This is a monorepo consisting of:
 - **Aesthetics**: Custom Retro-Tactical UI with Neon Glow and Scanline overlays.
 
 ---
-**DEVELOPED BY TIM ANALISIS INTELIJEN**
