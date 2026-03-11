@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from urllib.parse import urlparse
+from gnews import GNews
 
 app = FastAPI(title="GEO-SENTINEL Strategic Extraction API")
 
@@ -46,9 +47,25 @@ def save_to_sheets(data_list):
         print(f"Error: {e}")
         return False
 
+import base64
+
+def decode_google_news_url(source_url: str) -> str:
+    """Decodes Google News redirect URLs to original links as a fallback."""
+    try:
+        url_path = source_url.split("articles/")[1].split("?")[0]
+        # Google News URLs are often base64 encoded with some extra padding/noise
+        # This is a simplified version of the logic used by googlenewsdecoder
+        decoded = base64.b64decode(url_path + "==").decode("utf-8", errors="ignore")
+        # Extract the actual URL from the decoded mess (usually starts with http)
+        match = re.search(r"https?://[^\s\"']+", decoded)
+        if match: return match.group(0)
+    except: pass
+    return source_url
+
 def extract_media_name(url: str) -> str:
     try:
         domain = urlparse(url).netloc.replace('www.', '')
+        if not domain: return "Unknown"
         return domain.split('.')[0].capitalize()
     except: return "Unknown"
 
@@ -168,7 +185,24 @@ async def read_all_data():
 
 @app.post("/extract")
 async def process_news(news: NewsInput):
-    media = extract_media_name(news.url)
+    url_to_process = news.url
+    is_google_news = "news.google.com/rss/articles/" in news.url or news.source.lower() == "google news"
+    
+    if is_google_news:
+        # Method 1: GNews Library
+        try:
+            google_news = GNews()
+            article = google_news.get_full_article(news.url)
+            if article and hasattr(article, 'url') and article.url and "google.com" not in article.url:
+                url_to_process = article.url
+            else:
+                # Method 2: Manual Decoder Fallback
+                url_to_process = decode_google_news_url(news.url)
+        except Exception as e:
+            print(f"GNews Extraction Error: {e}")
+            url_to_process = decode_google_news_url(news.url)
+    
+    media = extract_media_name(url_to_process)
     intel = extract_intel(news.title)
     
     # Final data row for Sheet
@@ -180,7 +214,7 @@ async def process_news(news: NewsInput):
         intel['geocode'], 
         intel['assets'], 
         intel['topics'], 
-        news.url
+        url_to_process
     ]
     
     success = save_to_sheets(row)
@@ -190,6 +224,7 @@ async def process_news(news: NewsInput):
         "data": {
             "title": news.title,
             "media": media,
+            "url": url_to_process,
             **intel
         }
     }
