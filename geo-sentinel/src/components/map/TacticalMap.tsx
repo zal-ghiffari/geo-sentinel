@@ -69,10 +69,25 @@ interface TacticalMapProps {
     height?: string;
 }
 
-const MapAutoZoom = ({ pos }: { pos: [number, number] | null }) => {
+const MapAutoZoom = ({ pos, setZoomTo }: { pos: [number, number] | null, setZoomTo: (p: [number, number] | null) => void }) => {
     const map = useMap();
+
     useEffect(() => {
-        if (pos) map.setView(pos, 6, { animate: true });
+        const handlePopupClose = () => {
+            setZoomTo(null);
+        };
+        map.on('popupclose', handlePopupClose);
+        return () => {
+            map.off('popupclose', handlePopupClose);
+        };
+    }, [map, setZoomTo]);
+
+    useEffect(() => {
+        if (pos) {
+            map.setView(pos, 6, { animate: true });
+        } else {
+            map.setView([20, 20], 2, { animate: true });
+        }
     }, [pos, map]);
     return null;
 };
@@ -188,6 +203,7 @@ export function TacticalMap({ events = [], height = "500px" }: TacticalMapProps)
                         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                         attribution='&copy; CARTO'
                     />
+                    <MapAutoZoom pos={zoomTo} setZoomTo={setZoomTo} />
 
                     {/* Threat Area Highlighting */}
                     {Object.entries(COORDINATE_MAP).map(([code, pos]) => {
@@ -218,15 +234,20 @@ export function TacticalMap({ events = [], height = "500px" }: TacticalMapProps)
                             let pos = COORDINATE_MAP[code];
                             if (!pos) return null;
 
-                            // Coordinate Jitter to avoid stacking
-                            const jitter = (idx * 0.05) % 0.5;
-                            const jitteredPos: [number, number] = [pos[0] + jitter, pos[1] + jitter];
+                            // Spatial distribution to avoid stacking
+                            // We use a spiral-like offset based on the index to spread them around the center
+                            const angle = idx * 137.5; // Golden angle
+                            const distance = 0.3 * Math.sqrt(idx); // Standard spiral spread
+                            const offsetLat = distance * Math.sin(angle * (Math.PI / 180));
+                            const offsetLng = distance * Math.cos(angle * (Math.PI / 180));
+
+                            const jitteredPos: [number, number] = [pos[0] + offsetLat, pos[1] + offsetLng];
 
                             const color = getPinColor(evt.Assets || evt.Topics);
 
-                            // Scale pin size based on data density (mocking logic since we don't have counts per location easily available in this loop)
+                            // Ideal pin sizing: smaller than before but still dynamic
                             const density = events.filter((e: any) => e.Geocode?.includes(code)).length;
-                            const radius = 4 + Math.min(density * 1.5, 12);
+                            const radius = 3 + Math.min(density * 0.8, 8); // Reduced scale
 
                             return (
                                 <CircleMarker
@@ -235,8 +256,8 @@ export function TacticalMap({ events = [], height = "500px" }: TacticalMapProps)
                                     radius={radius}
                                     color={color}
                                     fillColor={color}
-                                    fillOpacity={0.6 + (density * 0.05)}
-                                    weight={2}
+                                    fillOpacity={0.7}
+                                    weight={1.5}
                                     className="tactical-pulse"
                                     eventHandlers={{
                                         click: () => setZoomTo(jitteredPos)

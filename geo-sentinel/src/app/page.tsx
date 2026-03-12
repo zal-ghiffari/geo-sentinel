@@ -54,6 +54,7 @@ const NEWS_TABS = [
 export default function Home() {
   const [apiData, setApiData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState<number>(24); // Default to 24h
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,12 +75,21 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate Max Threat Level for Barometer based on Sovereign Status logic
+  // Filter data based on time
+  const filteredData = apiData.filter(item => {
+    if (!item.Datetime) return true; // Keep old data or data without timestamp for now
+    const itemTime = new Date(item.Datetime).getTime();
+    const now = new Date().getTime();
+    const diffHours = (now - itemTime) / (1000 * 60 * 60);
+    return diffHours <= timeFilter;
+  });
+
+  // Calculate Max Threat Level for Barometer based on filtered data
   const getMaxThreatLevel = () => {
-    if (apiData.length === 0) return 1;
+    if (filteredData.length === 0) return 1;
 
     const counts: Record<string, number> = {};
-    apiData.forEach(e => {
+    filteredData.forEach(e => {
       if (e.Country) {
         e.Country.split(',').forEach((c: string) => {
           const country = c.trim();
@@ -88,7 +98,9 @@ export default function Home() {
       }
     });
 
-    const maxCount = Math.max(...Object.values(counts), 0);
+    const values = Object.values(counts);
+    if (values.length === 0) return 1;
+    const maxCount = Math.max(...values, 0);
     if (maxCount >= 35) return 10; // MAJOR -> DEFCON 1
     if (maxCount >= 20) return 8;  // HIGH -> DEFCON 2
     if (maxCount >= 10) return 6;  // MEDIUM -> DEFCON 3
@@ -104,7 +116,7 @@ export default function Home() {
       <div className="absolute inset-0 z-50 pointer-events-none opacity-[0.03] bg-[linear-gradient(transparent_50%,rgba(0,0,0,1)_50%)] bg-[length:100%_2px]" />
 
       <BentoBox className="h-[calc(100vh-2.5rem)] pb-0 relative z-10 w-full overflow-y-auto no-scrollbar">
-        <Header />
+        <Header timeFilter={timeFilter} onTimeFilterChange={setTimeFilter} />
 
         <motion.div
           className="col-span-12 grid grid-cols-12 gap-4 pb-4"
@@ -138,18 +150,18 @@ export default function Home() {
           {/* RIGHT COLUMN: DATA ANALYTICS (8 cols) */}
           <div className="lg:col-span-8 flex flex-col gap-4">
             <motion.div variants={item}>
-              <TacticalMap events={apiData} height="440px" />
+              <TacticalMap events={filteredData} height="440px" />
             </motion.div>
 
             <motion.div variants={item}>
-              <CountryStatus events={apiData} />
+              <CountryStatus events={filteredData} />
             </motion.div>
           </div>
 
           {/* BOTTOM ROW: TEXT INTELLIGENCE (Full Width) */}
           <div className="col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-4 mt-2">
             <motion.div variants={item} className="lg:col-span-4 min-h-[400px]">
-              <IntelligenceFeed events={apiData} />
+              <IntelligenceFeed events={filteredData.slice(0, 5)} />
             </motion.div>
 
             <motion.div variants={item} className="lg:col-span-8">

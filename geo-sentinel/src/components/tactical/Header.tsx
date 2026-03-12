@@ -1,9 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Clock } from "lucide-react";
 
-export function Header() {
+interface HeaderProps {
+    timeFilter: number;
+    onTimeFilterChange: (hours: number) => void;
+}
+
+export function Header({ timeFilter, onTimeFilterChange }: HeaderProps) {
     const [timeStr, setTimeStr] = useState<string>("00:00:00 Z");
 
     useEffect(() => {
@@ -13,6 +18,8 @@ export function Header() {
         }, 1000);
         return () => clearInterval(interval);
     }, []);
+
+    const FILTER_OPTIONS = [1, 5, 10, 15, 20, 24];
 
     return (
         <header className="flex col-span-1 md:col-span-4 lg:col-span-12 items-center justify-between border-b border-tactical-800 pb-2 mb-2 bg-tactical-950/80 p-2 rounded-sm z-10 backdrop-blur-md">
@@ -29,6 +36,22 @@ export function Header() {
             </div>
 
             <div className="flex items-center gap-8">
+                {/* Time Filter Dropdown */}
+                <div className="flex flex-col items-end">
+                    <span className="text-[10px] text-tactical-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+                        <Clock size={10} /> Temporal Filter
+                    </span>
+                    <select
+                        value={timeFilter}
+                        onChange={(e) => onTimeFilterChange(Number(e.target.value))}
+                        className="bg-tactical-900 border border-tactical-700 text-neon-blue font-mono text-[10px] px-2 py-0.5 rounded focus:outline-none focus:border-neon-blue transition-colors appearance-none cursor-pointer"
+                    >
+                        {FILTER_OPTIONS.map(h => (
+                            <option key={h} value={h}>{h}H // WINDOW</option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className="flex flex-col items-end">
                     <span className="text-[10px] text-tactical-500 uppercase tracking-widest">System Status</span>
                     <div className="flex items-center gap-2">

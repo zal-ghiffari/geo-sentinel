@@ -1,5 +1,6 @@
 import re
 import gspread
+import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -206,7 +207,9 @@ async def process_news(news: NewsInput):
     intel = extract_intel(news.title)
     
     # Final data row for Sheet
+    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     row = [
+        timestamp,
         news.title, 
         media, 
         news.source, 
