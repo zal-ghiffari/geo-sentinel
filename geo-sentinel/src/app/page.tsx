@@ -55,6 +55,13 @@ export default function Home() {
   const [apiData, setApiData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState<number>(24); // Default to 24h
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+
+  // Clock Engine
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,13 +82,13 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Filter data based on time
+  // Filter data based on time relative to Current Time
   const filteredData = apiData.filter(item => {
-    if (!item.Datetime) return true; // Keep old data or data without timestamp for now
+    if (!item.Datetime) return true;
     const itemTime = new Date(item.Datetime).getTime();
-    const now = new Date().getTime();
-    const diffHours = (now - itemTime) / (1000 * 60 * 60);
-    return diffHours <= timeFilter;
+    const referenceTime = currentTime.getTime();
+    const diffHours = (referenceTime - itemTime) / (1000 * 60 * 60);
+    return diffHours >= 0 && diffHours <= timeFilter;
   });
 
   // Calculate Max Threat Level for Barometer based on filtered data
@@ -116,7 +123,11 @@ export default function Home() {
       <div className="absolute inset-0 z-50 pointer-events-none opacity-[0.03] bg-[linear-gradient(transparent_50%,rgba(0,0,0,1)_50%)] bg-[length:100%_2px]" />
 
       <BentoBox className="h-[calc(100vh-2.5rem)] pb-0 relative z-10 w-full overflow-y-auto no-scrollbar">
-        <Header timeFilter={timeFilter} onTimeFilterChange={setTimeFilter} />
+        <Header
+          timeFilter={timeFilter}
+          onTimeFilterChange={setTimeFilter}
+          currentTime={currentTime}
+        />
 
         <motion.div
           className="col-span-12 grid grid-cols-12 gap-4 pb-4"

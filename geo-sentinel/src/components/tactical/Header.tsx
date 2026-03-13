@@ -6,18 +6,11 @@ import { ShieldAlert, Clock } from "lucide-react";
 interface HeaderProps {
     timeFilter: number;
     onTimeFilterChange: (hours: number) => void;
+    currentTime: Date;
 }
 
-export function Header({ timeFilter, onTimeFilterChange }: HeaderProps) {
-    const [timeStr, setTimeStr] = useState<string>("00:00:00 Z");
-
-    useEffect(() => {
-        setTimeStr(new Date().toISOString().split("T")[1].split(".")[0] + " Z");
-        const interval = setInterval(() => {
-            setTimeStr(new Date().toISOString().split("T")[1].split(".")[0] + " Z");
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
+export function Header({ timeFilter, onTimeFilterChange, currentTime }: HeaderProps) {
+    const timeStr = currentTime.toISOString().split("T")[1].split(".")[0] + " Z";
 
     const FILTER_OPTIONS = [1, 5, 10, 15, 20, 24];
 
